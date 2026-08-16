@@ -456,14 +456,7 @@ void PLAT_bluetoothPair(char *addr) {
 	btlog("Pairing with %s\n", addr);
 	
 	char cmd[256];
-	
-	// Trust the device first (for automatic reconnection)
-	snprintf(cmd, sizeof(cmd), "bluetoothctl trust %s 2>/dev/null", addr);
-	system(cmd);
-	
-	// Small delay to ensure trust command completes
-	usleep(100000);
-	
+
 	// Pair with the device
 	snprintf(cmd, sizeof(cmd), "bluetoothctl pair %s 2>/dev/null", addr);
 	int ret = system(cmd);
@@ -478,7 +471,17 @@ void PLAT_bluetoothPair(char *addr) {
 			}
 		}
 	}
-	
+
+	// Trust the device so it can reconnect on its own later. This has to
+	// happen *after* pairing: before it, bluez may not know the device well
+	// enough for `trust` to stick.
+	if (ret == 0) {
+		usleep(100000);
+		snprintf(cmd, sizeof(cmd), "bluetoothctl trust %s 2>/dev/null", addr);
+		if (system(cmd) != 0)
+			LOG_error("BT trust failed for %s\n", addr);
+	}
+
 	// Remove from discovered list since it's now paired
 	bt_remove_discovered_device(addr);
 }

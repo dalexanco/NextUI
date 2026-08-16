@@ -35,6 +35,43 @@ start_hci_attach() {
 	done
 }
 
+list_paired_devices() {
+	# `devices Paired` is bluez 5.65+, `paired-devices` is the older spelling
+	d=`bluetoothctl devices Paired 2>/dev/null | awk '/^Device /{print $2}'`
+	[ -z "$d" ] && d=`bluetoothctl paired-devices 2>/dev/null | awk '/^Device /{print $2}'`
+	echo "$d"
+}
+
+# BlueZ never initiates a connection on its own, and it only accepts an
+# incoming one from a device marked as trusted. So mark every paired device
+# trusted (covers devices paired before this existed - the headset can then
+# reconnect by itself whenever it is powered on), and make a few outgoing
+# attempts of our own for devices that are already up.
+reconnect_known_devices() {
+	devs=`list_paired_devices`
+	[ -z "$devs" ] && return
+
+	for mac in $devs; do
+		bluetoothctl trust "$mac" >/dev/null 2>&1
+	done
+
+	attempt=0
+	while [ $attempt -lt 3 ]; do
+		sleep 2
+		pending=""
+		for mac in $devs; do
+			if bluetoothctl info "$mac" 2>/dev/null | grep -q "Connected: yes"; then
+				continue
+			fi
+			bluetoothctl connect "$mac" >/dev/null 2>&1 || pending="$pending $mac"
+		done
+		[ -z "$pending" ] && return
+		devs="$pending"
+		attempt=$((attempt + 1))
+		sleep 8
+	done
+}
+
 start_bt() {
 	rfkill.elf unblock bluetooth
 
@@ -71,6 +108,8 @@ start_bt() {
 		bluetoothctl system-alias "$DEVICE_NAME" 2>/dev/null
     }
 
+	# in the background, this waits on devices that may still be booting
+	reconnect_known_devices &
 }
 
 ble_start() {
