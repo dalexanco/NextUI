@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h>
 #include <SDL2/SDL.h>
 #include <msettings.h>
 #include "ma_internal.h"
@@ -29,6 +30,17 @@ void Audio_checkAndResetIfNeeded(void) {
 	resetAudio = false;
 	LOG_info("Resetting audio device config! (new state: %s)\n", SDL_getenv("AUDIODEV"));
 	SND_resetAudio(core.sample_rate, core.fps);
+
+	// The sink we were pointed at may be gone already (a headset that
+	// disconnects takes its bluealsa PCM with it, and .asoundrc is rewritten
+	// asynchronously by audiomon). Rather than run the rest of the session
+	// mute, fall back to the built-in output.
+	const char* audiodev = SDL_getenv("AUDIODEV");
+	if (!SND_hasDevice() && (!audiodev || strcmp(audiodev, "default") != 0)) {
+		LOG_warn("Audio device did not come back up, falling back to the default sink\n");
+		SDL_setenv("AUDIODEV", "default", 1);
+		SND_resetAudio(core.sample_rate, core.fps);
+	}
 }
 
 void audio_sample_callback(int16_t left, int16_t right) {

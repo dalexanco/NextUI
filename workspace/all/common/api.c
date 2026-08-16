@@ -2617,10 +2617,13 @@ pthread_mutex_t audio_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void SND_audioCallback(void *userdata, uint8_t *stream, int len)
 {
-	if (snd.frame_count == 0)
+	// Can happen while the device is being torn down (eg. the bluetooth sink
+	// disappeared); hand SDL silence rather than an uninitialized buffer.
+	if (!snd.initialized || !snd.buffer || snd.frame_count == 0)
+	{
+		memset(stream, 0, len);
 		return;
-	if (!snd.initialized)
-		LOG_error("Calling callback without audio device\n");
+	}
 
 	int16_t *out = (int16_t *)stream;
 	len /= (sizeof(int16_t) * 2);
@@ -2850,6 +2853,12 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 	int total_consumed_frames = 0;
 	double ratio = 1.0;
 
+	// No device (open failed, or we are between close and reopen after a sink
+	// change): drop the samples. Claiming them keeps the core running instead
+	// of retrying forever.
+	if (!snd.initialized || !snd.buffer)
+		return frame_count;
+
 	if (snd.frame_count <= 0)
 	{
 		snd.frame_count = 4096; // idk some random samples nr this should never hit tho, just to be safe
@@ -2989,6 +2998,10 @@ size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count)
 
 	// int full = 0;
 
+	// see SND_batchSamples
+	if (!snd.initialized || !snd.buffer)
+		return frame_count;
+
 	float remaining_space = snd.frame_count;
 	pthread_mutex_lock(&audio_mutex);
 	if (snd.frame_in >= snd.frame_out)
@@ -3096,29 +3109,36 @@ size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count)
 	return total_consumed_frames;
 }
 
-void SND_init(double sample_rate, double frame_rate)
-{ // plat_sound_init
-	LOG_info("SND_init\n");
-	if(SDL_WasInit(SDL_INIT_AUDIO))
-		LOG_error("SND_init: already initialized\n");
+// Opens (or reopens) the playback device. Expects the audio subsystem to be
+// initialized already, see SND_init.
+static void SND_openDevice(double sample_rate, double frame_rate)
+{
 	perf.req_fps = frame_rate;
-	SDL_InitSubSystem(SDL_INIT_AUDIO);
 
 	fps_counter = 0;
 	fps_buffer_index = 0;
 
 #if defined(USE_SDL2)
-	LOG_info("Available audio drivers:\n");
-	for (int i = 0; i < SDL_GetNumAudioDrivers(); i++)
+	// Only on the first open: SDL_GetNumAudioDevices() enumerates every ALSA
+	// PCM, which reaches out to bluealsa over D-Bus and can hang when a
+	// bluetooth sink is in the middle of going away - exactly the situation
+	// a reopen is usually reacting to.
+	static bool logged_devices = false;
+	if (!logged_devices)
 	{
-		LOG_info("- %s\n", SDL_GetAudioDriver(i));
-	}
-	LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+		logged_devices = true;
+		LOG_info("Available audio drivers:\n");
+		for (int i = 0; i < SDL_GetNumAudioDrivers(); i++)
+		{
+			LOG_info("- %s\n", SDL_GetAudioDriver(i));
+		}
+		LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
 
-	LOG_info("Available audio devices:\n");
-	for (int i = 0; i < SDL_GetNumAudioDevices(0); i++)
-	{
-		LOG_info("- %s\n", SDL_GetAudioDeviceName(i, 0));
+		LOG_info("Available audio devices:\n");
+		for (int i = 0; i < SDL_GetNumAudioDevices(0); i++)
+		{
+			LOG_info("- %s\n", SDL_GetAudioDeviceName(i, 0));
+		}
 	}
 #endif
 
@@ -3140,15 +3160,17 @@ void SND_init(double sample_rate, double frame_rate)
 	{
 		LOG_info("SDL_OpenAudioDevice error: %s\n", SDL_GetError());
 		if (SDL_OpenAudio(&spec_in, &spec_out) < 0) {
-			LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
-			SDL_QuitSubSystem(SDL_INIT_AUDIO);
+			// Leave snd zeroed: no device, no ring buffer. The producers
+			// (SND_batchSamples*) bail out on !initialized so a failed open
+			// costs us silence, never a crash or a stalled game loop.
+			LOG_error("SDL_OpenAudio error: %s\n", SDL_GetError());
 			return;
 		}
+		snd.device_id = 1;
 	}
 #else
 	if (SDL_OpenAudio(&spec_in, &spec_out) < 0) {
-		LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
-		SDL_QuitSubSystem(SDL_INIT_AUDIO);
+		LOG_error("SDL_OpenAudio error: %s\n", SDL_GetError());
 		return;
 	}
 	snd.device_id = 1;
@@ -3172,39 +3194,72 @@ void SND_init(double sample_rate, double frame_rate)
 
 }
 
-void SND_quit(void)
+// Closes the playback device but keeps the audio subsystem up, see SND_quit.
+static void SND_closeDevice(void)
 {
 	if (!snd.initialized)
 	{
-		LOG_warn("Skipping SND teardown, not initialized.\n");
+		LOG_warn("Skipping SND device teardown, not initialized.\n");
 		return;
 	}
 
+	// Stop feeding the device before we close it. Nothing must touch the ring
+	// buffer between here and the free() below.
 	SND_pauseAudio(true);
+	snd.initialized = 0;
 
 #if defined(USE_SDL2)
 	SDL_CloseAudioDevice(snd.device_id);
 #else
 	SDL_CloseAudio();
 #endif
-
-	SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	if(SDL_WasInit(SDL_INIT_AUDIO))
-		LOG_error("SND_quit: failed to quit audio!!\n");
-	LOG_debug("SND_quit: quit audio!!\n");
-	snd.initialized = 0;
+	snd.device_id = 0;
 
 	if (snd.buffer)
 	{
 		free(snd.buffer);
 		snd.buffer = NULL;
 	}
+	snd.frame_count = 0;
+	snd.frame_in = 0;
+	snd.frame_out = 0;
+}
+
+void SND_init(double sample_rate, double frame_rate)
+{ // plat_sound_init
+	LOG_info("SND_init\n");
+	if(SDL_WasInit(SDL_INIT_AUDIO))
+		LOG_error("SND_init: already initialized\n");
+	SDL_InitSubSystem(SDL_INIT_AUDIO);
+	SND_openDevice(sample_rate, frame_rate);
+}
+
+void SND_quit(void)
+{
+	SND_closeDevice();
+
+	SDL_QuitSubSystem(SDL_INIT_AUDIO);
+	if(SDL_WasInit(SDL_INIT_AUDIO))
+		LOG_error("SND_quit: failed to quit audio!!\n");
+	LOG_debug("SND_quit: quit audio!!\n");
 }
 
 void SND_resetAudio(double sample_rate, double frame_rate)
 {
-	SND_quit();
-	SND_init(sample_rate, frame_rate);
+	// Deliberately *not* SND_quit()/SND_init(): tearing the audio subsystem
+	// down makes SDL join its ALSA hotplug thread, which re-enumerates every
+	// PCM (bluealsa included) over D-Bus. When the sink change we are
+	// reacting to is a bluetooth headset that just went away, that
+	// enumeration can block for a long time - and we run on the game loop
+	// thread, so the whole game freezes with it. Closing and reopening the
+	// device alone is enough and stays clear of the hotplug path.
+	SND_closeDevice();
+	SND_openDevice(sample_rate, frame_rate);
+}
+
+bool SND_hasDevice(void)
+{
+	return snd.initialized != 0;
 }
 
 void SND_pauseAudio(bool paused)
