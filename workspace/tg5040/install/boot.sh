@@ -84,9 +84,9 @@ done
 if [ -f "$UPDATE_PATH" ]; then 
 	cd $(dirname "$0")/$PLATFORM
 	if [ -d "$SYSTEM_PATH" ]; then
-		echo "TEXT:Updating NextUI" > /tmp/show2.fifo
+		echo "TEXT:Updating FlexUI" > /tmp/show2.fifo
 	else
-		echo "TEXT:Installing NextUI" > /tmp/show2.fifo
+		echo "TEXT:Installing FlexUI" > /tmp/show2.fifo
 	fi
 
 	# clean replacement for core paths
