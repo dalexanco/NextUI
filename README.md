@@ -1,149 +1,84 @@
-<div align="center">
+# FlexUI
 
-  <img width=128px src="github/logo_outline.png">
+A variant of [NextUI](https://github.com/LoveRetro/NextUI) for the TrimUI Brick and
+Smart Pro, built around **paks**: more extension points in the firmware itself, and
+more of the useful paks shipped as part of the system rather than bolted on.
 
-</div>
+FlexUI is not a rewrite and not a competitor. It tracks NextUI closely and carries a
+deliberately small set of changes to it. Everything NextUI does, FlexUI does — the
+launcher, `minarch`, the emulator paks, RetroAchievements, all of it.
 
-<hr>
+## Why it exists
 
-<h4 align="center">
-  <a href="https://nextui.loveretro.games/usage/#getting-started" target="_blank">Installation Guide</a>
-  ·
-  <a href="https://nextui.loveretro.games/docs/" target="_blank">Documentation</a>
-  ·
-  <a href="https://discord.gg/HKd7wqZk3h" target="_blank">Discord</a>
-</h4>
+NextUI's extension system is the shell: a pak is a directory with a `launch.sh`. That
+is elegant, and it stops short in two places.
 
-<div align="center"><p>
-    <a href="https://github.com/LoveRetro/NextUI/releases/latest">
-      <img alt="Latest release" src="https://img.shields.io/github/v/release/LoveRetro/NextUI?style=for-the-badge&logo=starship&include_prerelease=false&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41&sort=semver" />
-    </a>
-    <a href="https://github.com/LoveRetro/NextUI/pulse">
-      <img alt="Last commit" src="https://img.shields.io/github/last-commit/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=8bd5ca&logoColor=D9E0EE&labelColor=302D41"/>
-    </a>
-    <a href="https://github.com/LoveRetro/NextUI/blob/main/LICENSE">
-      <img alt="License" src="https://img.shields.io/github/license/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=ee999f&logoColor=D9E0EE&labelColor=302D41" />
-    </a>
-    <a href="https://github.com/LoveRetro/NextUI/stargazers">
-      <img alt="Stars" src="https://img.shields.io/github/stars/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=c69ff5&logoColor=D9E0EE&labelColor=302D41" />
-    </a>
-    <a href="https://github.com/LoveRetro/NextUI/issues">
-      <img alt="Issues" src="https://img.shields.io/github/issues/LoveRetro/NextUI?style=for-the-badge&logo=bilibili&color=F5E0DC&logoColor=D9E0EE&labelColor=302D41" />
-    </a>
-</div>
+- A pak can be *launched*, but it cannot easily *react* — to a game starting, to the
+  console going to sleep, to boot.
+- Anything that needs to be always-on has to be installed by hand on the SD card, so
+  it is not really part of the system.
 
----
+FlexUI adds the seams that fix both, then uses them to ship paks natively.
 
-A CFW based of MinUI with a rebuild emulation engine and tons of added features for the TrimUI Brick and Smart Pro. 
+## What FlexUI adds
 
-For other devices we recommend checking out [MinUI](https://github.com/shauninman/MinUI)
+| | Status |
+|---|---|
+| **Lifecycle hooks** — a Tools pak registers for `boot`, `pre-launch`, `post-launch`, `pre-sleep`, `post-resume` by dropping a matching script next to its `launch.sh`; a `pre-launch.sh` that exits non-zero cancels the launch | done |
+| **Native paks** — Parental control, Music Player, Gift Code shipped with the system instead of installed by hand | in progress |
+| **Interface translations** | planned |
+| **Pak auto-discovery in the build** — adding a pak stops meaning "edit two makefiles" | planned |
 
-## License
+Each is kept as small as possible inside NextUI's own code. See
+[docs/fork-strategy.md](docs/fork-strategy.md).
 
-This project is licensed under [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0).
-Personal, educational, and non-commercial use is freely permitted. Commercial use is not.
-See [LICENSE](LICENSE) and [NOTICE](NOTICE) for full details.
+## Relationship to NextUI
 
-> **Note:** This project was previously licensed under GPL 3.0. As of August 15, 2026, the license
-> has changed to PolyForm Noncommercial 1.0.0. The full transition history and rationale
-> is documented in [issue #765](https://github.com/LoveRetro/NextUI/issues/765).
+FlexUI is a fork that intends to stay one. Every change to NextUI's own code is kept
+minimal on purpose, so that upstream releases can be picked up quickly and so that
+the changes can be offered back as pull requests. A change that gets merged upstream
+is deleted here.
 
-## Changes and additions
+**Report FlexUI problems here, not to LoveRetro.** If a bug reproduces on stock
+NextUI, it belongs upstream.
 
-- Fixed both screen tearing and sync stutter problems of MinUI by rebuilding the emulator engine core
-- Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
-- High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
-- Much lower latency (average 20ms, 1 frame of 60fps)
-- Shaders!
-- Fully OpenGL/GPU based for faster performance!
-- native WiFi support
-- Game art/media support
-- Game time tracker!
-- Cheats support
-- Integrated WiFi
-- Bluetooth Audio
-- Overlays support!
-- Dynamic cpu speed scaling (keeps your device cool and extends battery life, but gives the performance right when needed)
-- Fully GPU OpenGL based for faster performance
-- Custom bootlogos contributed by [@SolvalouArt](https://bsky.app/profile/solvalouart.bsky.social)
-- Color and font settings to customize the NextUI interface
-- Menu animations
-- LED control, change colors, effects, brightness
-- LED indicators, low battery, stand by, charging (brightness can be set seperately)
-- Haptic feedback in the menu by [@ExonakiDev](https://github.com/exonakidev)
-- Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
-- Display controls (color temperature, brightness, contrast, saturation, exposure)
-- Support for automatic NTP time synchronization with timezones and realtime clock (RTC)
-- Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
-- Battery Monitoring including history graph and time left prediction
-- Scrolling animated titles for longer game names
-- Updated and optimized build emulation cores
-- Rumble strength fixed and is now variable as used by the games
-- FBNeo Arcade screen rotation
-- PAL Mode
-- Next font supports CJK for JP/CN etc rom names
-- Lot of other smaller fixes and optimizations
-
----
-
-## Currently supported devices:
-- Trimui Brick
-- Trimui Smart Pro
-- Trimui Smart Pro S
-
----
+All credit for the firmware itself goes to the NextUI team, and to
+[@shauninman](https://github.com/shauninman) for MinUI, which NextUI forked.
 
 ## Installing
 
-Follow our [installation guide](https://nextui.loveretro.games/usage/#getting-started).
+Build from source for now (below). FlexUI installs the same way NextUI does — see
+NextUI's [installation guide](https://nextui.loveretro.games/usage/#getting-started)
+for the SD card side.
 
----
+## Building
 
-## How to use
+Cross-compilation runs in a Docker or Podman container; the root makefile runs on the
+host.
 
-While in menu:
+```sh
+make PLATFORM=tg5040 build      # one platform
+make all                        # both platforms + release zips
+make PLATFORM=tg5040 shell      # interactive toolchain shell
+```
 
-- Hold `start` and press `volume up` or `volume down` to adjust brighness
-- Hold `select` and press `volume up` or `volume down` to adjust color temperature
-- Short press `select` to open the game switcher
+Prerequisites: Docker or Podman, git, make, curl, zip, jq, zipmerge, and adb to
+deploy to the device.
 
-While in game:
+## Working on FlexUI
 
-- `Menu` opens in game options menu, adjusting controls, scaling and what not
-- Hold `menu` and `select` at same time to open up the game switcher
+| Document | Covers |
+|---|---|
+| [docs/fork-strategy.md](docs/fork-strategy.md) | Why the fork is shaped this way |
+| [docs/architecture/](docs/architecture/index.md) | How NextUI works |
+| `PAKS.md`, `HOOKS.md` | The extension points, upstream's own specs |
 
-Deep sleep:
+FlexUI is a plain fork of NextUI: one `main` that merges `nextui/main` at each
+sync, via `scripts/flexui/sync-upstream.sh`. Changes to NextUI's own code are
+kept deliberately small so that upstream releases stay cheap to pick up.
 
-When the device is left idle it will enter light sleep. Light sleep turns the screen off and pulses the leds 5 times.
+## Licence
 
-After two minutes the device will go into deep sleep. The leds will turn completely off.
-
----
-
-## What about X feature?
-
-NextUI supports a variety of optional extras called Paks that are maintained by community members.
-
-Our wiki has a [list of all available Paks](https://nextui.loveretro.games/pak-store/) that can be downloaded from our Pak Store straight on your device.
-
----
-
-## Credits
-
-- [josegonzalez](https://github.com/josegonzalez) for [minui-keyboard](https://github.com/josegonzalez/minui-keyboard)
-- [knulli-cfw](https://github.com/knulli-cfw)/[Mikhailzrick](https://github.com/Mikhailzrick) for [fan-control-daemon](https://github.com/knulli-cfw/knulli-linux/commit/5c1b4724330b59cbe8af79d0a7f1dac86f1c221a)
-- [Kenney](www.kenney.nl) for [Input Prompts](https://kenney.nl/assets/input-prompts)
-
----
-
-## Play Retro's review of NextUI
-
-[![image](https://github.com/user-attachments/assets/43217a30-e052-4f67-88a9-c4361f82e72f)](https://www.youtube.com/watch?v=m_7ObMHAFK4)
-
-##  Retro Handhelds' coverage of NextUI
-
-[![image](https://github.com/user-attachments/assets/5fd538ea-285b-46e9-add4-1ef99b2ee9e5)](https://www.youtube.com/watch?v=KlYVmtYDqRI)
-
----
-
-## For all other info visit our website: [nextui.loveretro.games](https://nextui.loveretro.games)
+[PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0),
+inherited from NextUI. Personal, educational and non-commercial use is freely
+permitted; commercial use is not. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

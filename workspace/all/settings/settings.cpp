@@ -1033,7 +1033,7 @@ int main(int argc, char *argv[])
 
         auto aboutMenu = new MenuList(MenuItemType::Fixed, "About",
         {
-            new StaticMenuItem{ListItemType::Generic, "NextUI version", "",
+            new StaticMenuItem{ListItemType::Generic, "FlexUI version", "",
             []() -> std::any {
                 std::ifstream t(ROOT_SYSTEM_PATH "/version.txt");
                 std::stringstream buffer;

@@ -1,0 +1,6 @@
+# Files the fork owns outright: always keep our version when merging upstream.
+# Needs the driver enabled locally, which scripts/flexui/setup.sh does:
+#     git config merge.ours.driver true
+README.md                          merge=ours
+workspace/tg5040/install/logo.png  merge=ours
+workspace/tg5050/install/logo.png  merge=ours
