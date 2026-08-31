@@ -46,3 +46,14 @@ workspace/.container_runtime
 AGENTS.md
 CLAUDE.md
 .worktrees/
+
+# Claude Code local state (rules/ and skills/ are tracked)
+.claude/worktrees/
+.claude/RESUME.md
+.claude/settings.local.json
+
+# FlexUI tracks its own agent instructions (upstream ignores CLAUDE.md above).
+!CLAUDE.md
+
+# Sibling pak projects symlinked into the workspace for local builds
+workspace/nextui-*
