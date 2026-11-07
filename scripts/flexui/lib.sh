@@ -11,7 +11,7 @@ UPSTREAM_BRANCH="${UPSTREAM_BRANCH:-main}"
 # Files the fork owns outright: replaced wholesale, and kept on every upstream
 # merge by the "ours" merge driver declared in .gitattributes. They cost no
 # maintenance, so footprint.sh does not count them.
-FORK_OWNED="README.md workspace/tg5040/install/logo.png workspace/tg5050/install/logo.png"
+FORK_OWNED="README.md workspace/tg5040/install/logo.png workspace/tg5050/install/logo.png workspace/h700/install/logo.png"
 
 die() {
 	echo "error: $*" >&2
