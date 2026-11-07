@@ -18,7 +18,9 @@ ifeq (,$(PLATFORM))
 $(error please specify PLATFORM, eg. PLATFORM=tg5040 make)
 endif
 
-MODULES =
+MODULES = parental
+
+DEST_parental = EXTRAS/Tools/$(PLATFORM)/Parental.pak
 
 # install runs on the host from the root makefile, so it must not need the
 # cross toolchain: it only copies what `all` already built in the container.
