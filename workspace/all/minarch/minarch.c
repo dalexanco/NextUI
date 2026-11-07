@@ -22,6 +22,8 @@
 #include "ma_environment.h"
 #include "ma_config.h"
 #include "ma_runframe.h"
+#define FLEXUI_MINARCH_CONTROL_IMPL
+#include "../flexui/minarch_control.h"
 
 ///////////////////////////////////////
 
@@ -218,7 +220,8 @@ int main(int argc , char* argv[]) {
 	InitSettings(); // after we initialize audio
 	Menu_init();
 	Notification_init();
-	
+	MinarchControl_init();
+
 	// Load game for RetroAchievements tracking (must be after Notification_init)
 	// Pass ROM data if available, otherwise just path (for cores that load from file)
 	{
@@ -335,6 +338,7 @@ int main(int argc , char* argv[]) {
 		Audio_checkAndResetIfNeeded();
 
 		hdmimon();
+		MinarchControl_poll();
 	}
 	int cw, ch;
 	unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
