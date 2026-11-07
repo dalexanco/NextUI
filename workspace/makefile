@@ -50,6 +50,7 @@ endif
 	cd ./all/libgametimedb/ && make
 	cd ./all/gametimectl/ && make
 	cd ./all/gametime/ && make
+	cd ./all/flexui/ && make # FlexUI modules, see all/flexui/makefile
 	cd ./all/minput/ && make
 	cd ./all/syncsettings/ && make
 	cd ./all/nextval/ && make
@@ -91,6 +92,7 @@ ifneq (,$(filter $(PLATFORM),tg5040 tg5050 h700))
 endif
 	cd ./all/show2/ && make clean
 	cd ./all/batmon/ && make clean
+	cd ./all/flexui/ && make clean
 ifeq ($(PLATFORM), tg5040)
 	cd ./$(PLATFORM)/rfkill && make clean
 	cd ./$(PLATFORM)/btmanager && make clean
