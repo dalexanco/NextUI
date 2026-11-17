@@ -48,6 +48,19 @@ scripts/flexui/footprint.sh      # what the fork costs
 - `README.md` and the install logos are `merge=ours` in `.gitattributes`: the
   fork owns them, upstream edits to them are discarded.
 
+### Remotes
+
+"Pull" means **pull from the fork**, `mine` (`dalexanco/NextUI`), never `origin`.
+Here `origin` and `nextui` both point to upstream LoveRetro/NextUI: anything
+taken from upstream goes through `sync-upstream.sh` instead.
+
+```sh
+git fetch https://github.com/dalexanco/NextUI.git <branch>:refs/remotes/mine/<branch>
+git merge --ff-only mine/<branch>   # or reset --hard if the fork rebased it, after `git cherry` shows no local-only commit
+```
+
+SSH to `mine` can fail (no key loaded); fetch over HTTPS, as above.
+
 ## Repository layout
 
 Two trees, merged into `./build` at build time:
