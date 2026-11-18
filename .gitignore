@@ -57,3 +57,4 @@ CLAUDE.md
 
 # Sibling pak projects symlinked into the workspace for local builds
 workspace/nextui-*
+build-sim/

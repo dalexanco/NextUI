@@ -71,9 +71,19 @@ void PLAT_quitInput(void) {
 
 ///////////////////////////////
 
+// Simulated hardware state, written by test/sim/sim.sh ("sim.sh set ...").
+// One integer per file; a missing file keeps the old desktop defaults.
+#define SIM_PATH "/var/tmp/nextui/sim"
+
+static int simInt(char* name, int fallback) {
+	char path[256];
+	snprintf(path, sizeof(path), SIM_PATH "/%s", name);
+	return exists(path) ? getInt(path) : fallback;
+}
+
 void PLAT_getNetworkStatus(int* is_online)
 {
-	*is_online = 0;
+	*is_online = simInt("wifi", 0);
 }
 
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
@@ -82,8 +92,8 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 
 void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
 {
-	*is_charging = 1;
-	*charge = 100;
+	*is_charging = simInt("charging", 1);
+	*charge = simInt("battery", 100);
 }
 
 int PLAT_isUSBConnected(void)
@@ -127,7 +137,7 @@ void PLAT_getOsVersionInfo(char *output_str, size_t max_len)
 }
 
 ConnectionStrength PLAT_connectionStrength(void) {
-	return SIGNAL_STRENGTH_HIGH;
+	return simInt("wifi", 0) ? SIGNAL_STRENGTH_HIGH : SIGNAL_STRENGTH_OFF;
 }
 
 /////////////////////////////////
