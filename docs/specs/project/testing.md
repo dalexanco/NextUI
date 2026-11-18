@@ -19,6 +19,7 @@ Commands and limits: [`.claude/skills/sim/SKILL.md`](../../../.claude/skills/sim
 | Device buttons (`key`) | Screenshots (`shot`) |
 | Battery, charging, Wi-Fi state (`set`), read by `workspace/desktop/platform/platform.c` | Simulator log (`log`) |
 | Hook events (`emit`) | Files on the simulated SD card (`exec`) |
+| Game launch and quit (`rom`, `game start`, `game stop`) | Stand-in `minarch.elf` answering `SIGUSR1` / `SIGUSR2` |
 
 The SD card and the build cache live on volumes, so test data survives rebuilds.
 
@@ -29,7 +30,7 @@ The SD card and the build cache live on volumes, so test data survives rebuilds.
 | [Hooks](../core/hooks.md) | Order, veto, timeouts, log rotation, with test paks and `emit` |
 | [Manifest](../core/manifest.md) | Discovery, legacy synthesis, validation errors in the hooks log |
 | [Clock](../core/clock.md) | Trust state logic; NTP itself needs the device |
-| [Parental](../parental/rules.md) | Budgets, windows, vetoes, counters and logs, once Parental.pak builds for desktop |
+| [Parental](../parental/enforcement.md) | Every [context](../parental/enforcement.md#contexts): allowed or vetoed launch, warning, save-and-quit, quit. Parental.pak itself once it builds for desktop (`libgametimedb` fails there today) |
 | [Admin](../admin/server.md) | The API and page on `localhost:8080` |
 | [Sync](../sync/sync.md) | Against a Samba container, from the sync pak's repository |
 
@@ -37,7 +38,7 @@ The SD card and the build cache live on volumes, so test data survives rebuilds.
 
 | Area | Why |
 |---|---|
-| Games, minarch, save-and-quit | No libretro core is built for desktop |
+| Gameplay, real minarch | No libretro core is built for desktop; a stand-in covers launch, quit and control signals |
 | LED, vibration | No desktop implementation |
 | Sleep, wake, lid, power | No suspend on desktop |
 | Real Wi-Fi, Bluetooth, `ntpd`, `uci` | Stock firmware services |

@@ -6,7 +6,7 @@
 . /opt/sim/env.sh
 
 pkill -x Xvfb 2>/dev/null
-Xvfb "$DISPLAY" -screen 0 1024x768x24 -nolisten tcp >> "$SIM_LOG" 2>&1 &
+Xvfb "$DISPLAY" -screen 0 1024x768x24 -nolisten tcp > /tmp/xvfb.log 2>&1 &
 i=0
 while ! xdpyinfo -display "$DISPLAY" > /dev/null 2>&1; do
 	i=$((i + 1))
@@ -46,7 +46,9 @@ while [ -f /tmp/sim_running ]; do
 		echo "--- next: $CMD" >> "$SIM_LOG"
 		parse_hook_cmd "$CMD"
 		if "$SYSTEM_PATH/bin/run_hooks.sh" pre-launch.d; then
-			eval "$CMD" >> "$SIM_LOG" 2>&1
+			# Paks run under BusyBox ash, the device shell: their launch.sh use
+			# ash extensions such as "&>", which Ubuntu's dash reads differently.
+			eval "busybox ash $CMD" >> "$SIM_LOG" 2>&1
 			"$SYSTEM_PATH/bin/run_hooks.sh" post-launch.d
 		else
 			echo "--- vetoed" >> "$SIM_LOG"

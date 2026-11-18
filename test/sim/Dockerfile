@@ -13,11 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev liblzma-dev libzstd-dev libbz2-dev zlib1g-dev \
         libsamplerate0-dev libsqlite3-dev liblz4-dev libssl-dev \
         xvfb xdotool imagemagick x11-utils \
-        busybox shellcheck curl procps \
+        busybox shellcheck curl procps psmisc \
     && rm -rf /var/lib/apt/lists/*
 
 COPY in-container/ /opt/sim/
-RUN chmod +x /opt/sim/*.sh
+RUN chmod +x /opt/sim/*.sh \
+    && mkdir -p /opt/sim/bin \
+    && ln -s /opt/sim/fake-minarch.sh /opt/sim/bin/minarch.elf
 
 WORKDIR /work
 CMD ["sleep", "infinity"]

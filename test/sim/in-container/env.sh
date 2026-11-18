@@ -16,7 +16,8 @@ export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
 export HOOKS_PATH="$USERDATA_PATH/.hooks"
 export LD_LIBRARY_PATH="$SYSTEM_PATH/lib:${LD_LIBRARY_PATH:-}"
-export PATH="$SYSTEM_PATH/bin:$PATH"
+# /opt/sim/bin first: its minarch.elf is the stand-in from fake-minarch.sh.
+export PATH="/opt/sim/bin:$SYSTEM_PATH/bin:$PATH"
 
 export DISPLAY=":99"
 export SDL_VIDEODRIVER="x11"

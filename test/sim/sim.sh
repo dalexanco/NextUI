@@ -14,6 +14,10 @@
 #   key <button>...     press device buttons: up down left right a b x y
 #                       start select menu power l1 r1; "wait" pauses 0.5 s
 #   set <name> <value>  simulated state: battery 0-100, charging 0|1, wifi 0|1
+#   rom <TAG> <file>    add an empty ROM, e.g. rom GB "Zelda.gb"
+#   game start <TAG> <file>  launch a ROM as the launcher would, hooks included
+#   game stop           quit the running game, as the player would
+#   game status         the running game, if any
 #   emit <event>        run the hooks of an event (boot, pre-launch, ...)
 #   log [n]             last n lines of the simulator log (default 40)
 #   exec <cmd>...       run a command in the container, with the device env
@@ -65,7 +69,7 @@ keysym() {
 }
 
 cmd="${1:-}"
-[ -n "$cmd" ] || { sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+[ -n "$cmd" ] || { sed -n '2,/^# Environment/p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 shift
 
 case "$cmd" in
@@ -126,6 +130,42 @@ set)
 	case "$1" in battery|charging|wifi) ;; *) die "set: unknown state '$1'" ;; esac
 	in_env sh -c 'mkdir -p "$SIM_PATH" && printf "%s\n" "$2" > "$SIM_PATH/$1"' sh "$1" "$2"
 	echo "sim: $1=$2"
+	;;
+rom)
+	need_running
+	[ $# -eq 2 ] || die "rom: usage: rom <TAG> <file>"
+	in_env sh -c 'd=$(ls -d "$ROMS_PATH"/*"($1)" 2>/dev/null | head -n 1)
+		[ -n "$d" ] || { echo "sim: no ROM folder for tag $1" >&2; exit 1; }
+		touch "$d/$2" && echo "$d/$2"' sh "$1" "$2"
+	;;
+game)
+	need_running
+	case "${1:-}" in
+	start)
+		[ $# -eq 3 ] || die "game: usage: game start <TAG> <file>"
+		# Writes /tmp/next exactly as nextui.c queueNext() does, then makes the
+		# launcher quit, so the loop in ui.sh runs the hooks and the emulator.
+		in_env sh -c 'd=$(ls -d "$ROMS_PATH"/*"($1)" 2>/dev/null | head -n 1)
+			[ -f "$d/$2" ] || { echo "sim: no ROM $2 for tag $1; add it with: sim.sh rom $1 \"$2\"" >&2; exit 1; }
+			emu="$SYSTEM_PATH/paks/Emus/$1.pak/launch.sh"
+			[ -f "$emu" ] || emu="$SDCARD_PATH/Emus/$PLATFORM/$1.pak/launch.sh"
+			printf "%s" "'"'"'$emu'"'"' '"'"'$d/$2'"'"'" > /tmp/next
+			pkill -x nextui.elf' sh "$2" "$3"
+		sleep 2
+		"$0" game status
+		;;
+	stop)
+		in_env sh -c 'pkill -TERM -x minarch.elf || { echo "sim: no game running" >&2; exit 1; }'
+		sleep 1
+		echo "sim: game stopped"
+		;;
+	status)
+		in_env sh -c 'if [ -f /tmp/sim_game ]; then echo "playing: $(cat /tmp/sim_game)"; else echo "no game running"; fi'
+		;;
+	*)
+		die "game: usage: game start <TAG> <file> | stop | status"
+		;;
+	esac
 	;;
 emit)
 	need_running
