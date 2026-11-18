@@ -63,5 +63,5 @@ workspace/
 
 ## Where FlexUI puts its own code
 
-`workspace/all/flexui/` and `skeleton/FLEXUI/` — paths upstream will never have,
-so they cannot conflict. See [../fork-strategy.md](../fork-strategy.md).
+`workspace/all/flexui/` for fork-built modules, registered in
+`workspace/all/flexui/makefile`; `skeleton/FLEXUI/` for fork-only SD card files.

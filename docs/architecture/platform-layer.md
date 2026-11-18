@@ -62,5 +62,4 @@ and compiles `platform.c` into the binary. **Each binary embeds its own copy of
 the platform layer.**
 
 That single `include` line, present in every app makefile and existing in only
-three copies, is the injection point FlexUI's "prelude" seam uses. See
-[../fork-strategy.md](../fork-strategy.md).
+three copies, is the natural place to inject flags into every binary at once.

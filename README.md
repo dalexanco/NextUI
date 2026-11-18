@@ -29,15 +29,12 @@ FlexUI adds the seams that fix both, then uses them to ship paks natively.
 | **Interface translations** | planned |
 | **Pak auto-discovery in the build** — adding a pak stops meaning "edit two makefiles" | planned |
 
-Each is kept as small as possible inside NextUI's own code. See
-[docs/fork-strategy.md](docs/fork-strategy.md).
+The target firmware is described in [docs/SPEC.md](docs/SPEC.md).
 
 ## Relationship to NextUI
 
-FlexUI is a fork that intends to stay one. Every change to NextUI's own code is kept
-minimal on purpose, so that upstream releases can be picked up quickly and so that
-the changes can be offered back as pull requests. A change that gets merged upstream
-is deleted here.
+Based on [NextUI](https://github.com/LoveRetro/NextUI). FlexUI diverges on purpose
+and no longer merges upstream releases; a useful upstream fix is picked by hand.
 
 **Report FlexUI problems here, not to LoveRetro.** If a bug reproduces on stock
 NextUI, it belongs upstream.
@@ -69,13 +66,11 @@ deploy to the device.
 
 | Document | Covers |
 |---|---|
-| [docs/fork-strategy.md](docs/fork-strategy.md) | Why the fork is shaped this way |
+| [docs/SPEC.md](docs/SPEC.md) | The target firmware: principles, components, specs |
 | [docs/architecture/](docs/architecture/index.md) | How NextUI works |
 | `PAKS.md`, `HOOKS.md` | The extension points, upstream's own specs |
 
-FlexUI is a plain fork of NextUI: one `main` that merges `nextui/main` at each
-sync, via `scripts/flexui/sync-upstream.sh`. Changes to NextUI's own code are
-kept deliberately small so that upstream releases stay cheap to pick up.
+FlexUI keeps one long-lived `main`. Upstream is not merged.
 
 ## Licence
 

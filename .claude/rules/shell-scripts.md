@@ -49,5 +49,5 @@ These work on Linux and fail (or behave differently) on macOS or BusyBox:
 ## Verify
 
 ```sh
-shellcheck -s sh scripts/flexui/*.sh
+shellcheck -s sh path/to/script.sh
 ```

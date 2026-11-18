@@ -54,5 +54,5 @@ one game ever running at a time.
 ## For the fork
 
 `ma_menu.c` and `ma_config.c` are dense with string literals (29 SDL_ttf call
-sites in `ma_menu.c` alone). Any i18n approach that rewrites them in place is the
-expensive one; see seam B in [../fork-strategy.md](../fork-strategy.md).
+sites in `ma_menu.c` alone). Any i18n approach that rewrites them in place touches every one of those
+call sites.

@@ -65,6 +65,5 @@ Adding an application means editing two hardcoded lists:
 - `workspace/makefile` — one `cd ./all/<app>/ && make` line per app;
 - `makefile`, `system:` target — one `cp` line per binary.
 
-Both are append-only lists, which conflict on adjacent lines at every sync. Seam
-C in [../fork-strategy.md](../fork-strategy.md) replaces them with
-auto-discovery.
+FlexUI adds its own binaries through the module registry in
+`workspace/all/flexui/makefile` instead, which both lists call once.
